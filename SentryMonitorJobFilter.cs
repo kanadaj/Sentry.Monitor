@@ -25,7 +25,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
     public SentryMonitorJobFilter(IHttpClientFactory httpClientFactory, string sentryDsn)
     {
         _httpClient = httpClientFactory.CreateClient("SentryMonitorJobFilter");
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue($"DSN {HttpUtility.UrlEncode(sentryDsn)}");
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("DSN", sentryDsn);
         _sentryDsn = sentryDsn;
         var sentryDsnRegex = new Regex("https://([^@]+)@([^/]+)/([0-9]+)");
         _sentryHost = sentryDsnRegex.Match(sentryDsn).Groups[2].Value;
