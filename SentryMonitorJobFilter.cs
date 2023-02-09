@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
 
 namespace Sentry.Hangfire;
 
@@ -24,7 +25,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
     public SentryMonitorJobFilter(IHttpClientFactory httpClientFactory, string sentryDsn)
     {
         _httpClient = httpClientFactory.CreateClient("SentryMonitorJobFilter");
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue($"DSN {_sentryDsn}");
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue($"DSN {HttpUtility.UrlEncode(sentryDsn)}");
         _sentryDsn = sentryDsn;
         var sentryDsnRegex = new Regex("https://([^@]+)@([^/]+)/([0-9]+)");
         _sentryHost = sentryDsnRegex.Match(sentryDsn).Groups[2].Value;
