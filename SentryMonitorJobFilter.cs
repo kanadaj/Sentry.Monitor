@@ -68,7 +68,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
             var startDate = filterContext.GetJobParameter<DateTime>("start_date");
             if (checkinId != null)
             {
-                _httpClient.PostAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
+                _httpClient.PutAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
                 {
                     status = "ok",
                     duration = (long)(DateTime.UtcNow - startDate).TotalMilliseconds,
@@ -90,7 +90,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
                 var startDate = filterContext.GetJobParameter<DateTime>("start_date");
                 if (checkinId != null)
                 {
-                    _httpClient.PostAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
+                    _httpClient.PutAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
                     {
                         status = "error",
                         duration = (long)(DateTime.UtcNow - startDate).TotalMilliseconds,
