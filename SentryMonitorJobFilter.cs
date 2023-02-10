@@ -54,7 +54,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
         if (id != null)
         {
-            var checkinId = filterContext.BackgroundJob.Id;
+            var checkinId = Guid.NewGuid().ToString("N");
             _checkins[filterContext.BackgroundJob.Id] = (checkinId, DateTime.UtcNow);
             filterContext.Connection.SetJobParameter(filterContext.BackgroundJob.Id, "start_date", DateTime.UtcNow.ToString("O"));
             _httpClient.PostAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
