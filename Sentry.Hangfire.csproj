@@ -12,7 +12,6 @@
 	<ItemGroup>
 	  <PackageReference Include="Hangfire.Core" Version="1.7.33" />
 	  <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-	  <PackageReference Include="Sentry" Version="3.28.0" />
 	</ItemGroup>
 	
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
