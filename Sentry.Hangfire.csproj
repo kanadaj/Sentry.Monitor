@@ -10,9 +10,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Hangfire.Core" Version="1.7.33" />
-	  <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-	  <PackageReference Include="Sentry" Version="3.28.0" />
+		<PackageReference Include="Hangfire.Core" Version="1.7.33" />
+		<!-- In an ideal world, Hangfire.Core didn't depend on Newtonsoft.Json. But since it does, we need to update it anyway to prevent a CVE, might as well use it instead of System.text.Json in this case -->
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+		<PackageReference Include="Sentry" Version="3.28.0" />
 	</ItemGroup>
 
 </Project>
