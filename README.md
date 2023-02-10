@@ -9,7 +9,7 @@ services.AddHangfire((serviceProvider, config) => config.
 	.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
 	.UseSimpleAssemblyNameTypeSerializer()
 	.UseRecommendedSerializerSettings()
-	.UseSentryMonitor(serviceProvider.GetRequiredService<IHttpClientFactory>(), configuration["Sentry:Dsn"])
+	.UseSentryMonitor(serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("HangfireSentryMonitor"), configuration["Sentry:Dsn"])
 );
 ```
 
