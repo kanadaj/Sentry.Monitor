@@ -29,7 +29,8 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
         _sentryHost = sentryDsnRegex.Match(sentryDsn).Groups[2].Value;
     }
 
-    private string Url(string id, string? checkinId = null) => $"https://{_sentryHost}/api/0/monitors/{id}/checkins/{checkinId}";
+    private string CreateCheckinUrl(string id) => $"https://{_sentryHost}/api/0/monitors/{id}/checkins/";
+    private string UpdateCheckinUrl(string id, string checkinId) => $"https://{_sentryHost}/api/0/monitors/{id}/checkins/{checkinId}/";
 
     public void OnPerforming(PerformingContext filterContext)
     {
@@ -49,13 +50,18 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
         if (id != null)
         {
             var checkinId = Guid.NewGuid().ToString("N");
-            filterContext.SetJobParameter("checkin_id", checkinId);
             filterContext.SetJobParameter("start_date", DateTime.UtcNow);
-            _httpClient.PostAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
+            var result = _httpClient.PostAsync(CreateCheckinUrl(id), new StringContent(JsonConvert.SerializeObject(new
             {
                 status = "in_progress",
                 checkin_id = checkinId,
-            }), Encoding.UTF8, "application/json"));
+            }), Encoding.UTF8, "application/json")).GetAwaiter().GetResult();
+            if (result.IsSuccessStatusCode)
+            {
+                var json = result.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                var checkin = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+                filterContext.SetJobParameter("checkin_id", checkin["id"]);
+            }
         }
     }
 
@@ -69,7 +75,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
             var startDate = filterContext.GetJobParameter<DateTime>("start_date");
             if (checkinId != null)
             {
-                _httpClient.PutAsync(Url(id, checkinId), new StringContent(JsonConvert.SerializeObject(new
+                _httpClient.PutAsync(UpdateCheckinUrl(id, checkinId), new StringContent(JsonConvert.SerializeObject(new
                 {
                     status = "ok",
                     duration = (long)(DateTime.UtcNow - startDate).TotalMilliseconds,
@@ -91,7 +97,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
                 var startDate = filterContext.GetJobParameter<DateTime>("start_date");
                 if (checkinId != null)
                 {
-                    _httpClient.PutAsync(Url(id, checkinId), new StringContent(JsonConvert.SerializeObject(new
+                    _httpClient.PutAsync(UpdateCheckinUrl(id, checkinId), new StringContent(JsonConvert.SerializeObject(new
                     {
                         status = "error",
                         duration = (long)(DateTime.UtcNow - startDate).TotalMilliseconds,
