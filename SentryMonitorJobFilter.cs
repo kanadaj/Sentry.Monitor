@@ -29,7 +29,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
         _sentryHost = sentryDsnRegex.Match(sentryDsn).Groups[2].Value;
     }
 
-    private string Url(string id) => $"https://{_sentryHost}/api/0/monitors/{id}/checkins/";
+    private string Url(string id, string? checkinId = null) => $"https://{_sentryHost}/api/0/monitors/{id}/checkins/{checkinId}";
 
     public void OnPerforming(PerformingContext filterContext)
     {
@@ -69,7 +69,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
             var startDate = filterContext.GetJobParameter<DateTime>("start_date");
             if (checkinId != null)
             {
-                _httpClient.PutAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
+                _httpClient.PutAsync(Url(id, checkinId), new StringContent(JsonConvert.SerializeObject(new
                 {
                     status = "ok",
                     duration = (long)(DateTime.UtcNow - startDate).TotalMilliseconds,
@@ -91,7 +91,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
                 var startDate = filterContext.GetJobParameter<DateTime>("start_date");
                 if (checkinId != null)
                 {
-                    _httpClient.PutAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
+                    _httpClient.PutAsync(Url(id, checkinId), new StringContent(JsonConvert.SerializeObject(new
                     {
                         status = "error",
                         duration = (long)(DateTime.UtcNow - startDate).TotalMilliseconds,
