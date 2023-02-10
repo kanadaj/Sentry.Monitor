@@ -15,8 +15,6 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 {
     public bool AllowMultiple => false;
 
-    private readonly Dictionary<string, (string checkinId, DateTime startDate)> _checkins = new();
-
     public int Order => 0;
 
     private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
@@ -65,7 +63,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
     {
         var (_, id) = GetMethodTypeAndId(filterContext.BackgroundJob.Job.Method, filterContext.BackgroundJob.Job.Method.DeclaringType);
 
-        if (id != null && _checkins.ContainsKey(filterContext.BackgroundJob.Id))
+        if (id != null)
         {
             var checkinId = filterContext.BackgroundJob.Id;
             var startDate = filterContext.GetJobParameter<DateTime>("start_date");
@@ -87,7 +85,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
         if (filterContext.CandidateState is FailedState failedState)
         {
-            if (id != null && _checkins.ContainsKey(filterContext.BackgroundJob.Id))
+            if (id != null)
             {
                 var checkinId = filterContext.BackgroundJob.Id;
                 var startDate = filterContext.GetJobParameter<DateTime>("start_date");
