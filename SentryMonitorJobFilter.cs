@@ -7,7 +7,6 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Web;
 
 namespace Sentry.Hangfire;
 
@@ -34,7 +33,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
     public void OnPerforming(PerformingContext filterContext)
     {
-        var (typeName, id) = GetMethodTypeAndId(filterContext.BackgroundJob.Job.Method, filterContext.BackgroundJob.Job.Method.DeclaringType);
+        var (typeName, id) = GetMethodTypeAndId(filterContext.BackgroundJob.Job.Method, filterContext.BackgroundJob.Job.Method.DeclaringType!);
 
         //HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue($"DSN {dsn}");
 
@@ -61,7 +60,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
     public void OnPerformed(PerformedContext filterContext)
     {
-        var (_, id) = GetMethodTypeAndId(filterContext.BackgroundJob.Job.Method, filterContext.BackgroundJob.Job.Method.DeclaringType);
+        var (_, id) = GetMethodTypeAndId(filterContext.BackgroundJob.Job.Method, filterContext.BackgroundJob.Job.Method.DeclaringType!);
 
         if (id != null)
         {
@@ -81,7 +80,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
     public void OnStateElection(ElectStateContext filterContext)
     {
-        var (_, id) = GetMethodTypeAndId(filterContext.BackgroundJob.Job.Method, filterContext.BackgroundJob.Job.Method.DeclaringType);
+        var (_, id) = GetMethodTypeAndId(filterContext.BackgroundJob.Job.Method, filterContext.BackgroundJob.Job.Method.DeclaringType!);
 
         if (filterContext.CandidateState is FailedState failedState)
         {
@@ -102,7 +101,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
         }
     }
 
-    private static (string typeName, string id) GetMethodTypeAndId(MemberInfo methodInfo, MemberInfo declaringType)
+    private static (string typeName, string? id) GetMethodTypeAndId(MemberInfo methodInfo, MemberInfo declaringType)
     {
         var methodAttribute = methodInfo.GetCustomAttributes(typeof(SentryMonitorIdAttribute), true)
             .Cast<SentryMonitorIdAttribute>()
