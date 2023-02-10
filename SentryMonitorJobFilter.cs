@@ -14,19 +14,19 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 {
     public bool AllowMultiple => false;
 
+    private readonly Dictionary<string, (string checkinId, DateTime startDate)> _checkins = new();
+
     public int Order => 0;
 
     private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
 
     private readonly HttpClient _httpClient;
-    private readonly string _sentryDsn;
     private readonly string _sentryHost;
 
     public SentryMonitorJobFilter(IHttpClientFactory httpClientFactory, string sentryDsn)
     {
         _httpClient = httpClientFactory.CreateClient("SentryMonitorJobFilter");
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("DSN", sentryDsn);
-        _sentryDsn = sentryDsn;
         var sentryDsnRegex = new Regex("https://([^@]+)@([^/]+)/([0-9]+)");
         _sentryHost = sentryDsnRegex.Match(sentryDsn).Groups[2].Value;
     }
@@ -54,13 +54,13 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
         if (id != null)
         {
-            var checkingId = Guid.NewGuid();
-            filterContext.Connection.SetJobParameter(filterContext.BackgroundJob.Id, "checkin_id", checkingId.ToString());
+            var checkinId = filterContext.BackgroundJob.Id;
+            _checkins[filterContext.BackgroundJob.Id] = (checkinId, DateTime.UtcNow);
             filterContext.Connection.SetJobParameter(filterContext.BackgroundJob.Id, "start_date", DateTime.UtcNow.ToString("O"));
             _httpClient.PostAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
             {
                 status = "in_progress",
-                checkin_id = checkingId,
+                checkin_id = checkinId,
             }), Encoding.UTF8, "application/json"));
         }
     }
@@ -76,13 +76,14 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
         if (id != null)
         {
-            var checkinId = filterContext.Connection.GetJobParameter(filterContext.BackgroundJob.Id, "checkin_id");
+            var (checkinId, startDate) = _checkins[filterContext.BackgroundJob.Id];
+            _checkins.Remove(filterContext.BackgroundJob.Id);
             if (checkinId != null)
             {
                 _httpClient.PostAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
                 {
                     status = "ok",
-                    duration = "",
+                    duration = (long)(DateTime.UtcNow - startDate).TotalMilliseconds,
                     checkin_id = checkinId,
                 }), Encoding.UTF8, "application/json"));
             }
@@ -102,8 +103,8 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
         {
             if (id != null)
             {
-                var checkinId = context.Connection.GetJobParameter(context.BackgroundJob.Id, "checkin_id");
-                var startDate = DateTime.Parse(context.Connection.GetJobParameter(context.BackgroundJob.Id, "start_date"));
+                var (checkinId, startDate) = _checkins[context.BackgroundJob.Id];
+                _checkins.Remove(context.BackgroundJob.Id);
                 if (checkinId != null)
                 {
                     _httpClient.PostAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
