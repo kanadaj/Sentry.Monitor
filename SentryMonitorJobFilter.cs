@@ -48,7 +48,8 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
         if (id != null)
         {
-            var checkinId = filterContext.BackgroundJob.Id;
+            var checkinId = Guid.NewGuid().ToString("N");
+            filterContext.SetJobParameter("checkin_id", checkinId);
             filterContext.SetJobParameter("start_date", DateTime.UtcNow);
             _httpClient.PostAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
             {
@@ -64,7 +65,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
         if (id != null)
         {
-            var checkinId = filterContext.BackgroundJob.Id;
+            var checkinId = filterContext.GetJobParameter<string>("checkin_id");
             var startDate = filterContext.GetJobParameter<DateTime>("start_date");
             if (checkinId != null)
             {
@@ -86,7 +87,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
         {
             if (id != null)
             {
-                var checkinId = filterContext.BackgroundJob.Id;
+                var checkinId = filterContext.GetJobParameter<string>("checkin_id");
                 var startDate = filterContext.GetJobParameter<DateTime>("start_date");
                 if (checkinId != null)
                 {
