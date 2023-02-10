@@ -4,6 +4,7 @@ using Hangfire.Server;
 using Hangfire.States;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
@@ -30,16 +31,12 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
         var sentryDsnRegex = new Regex("https://([^@]+)@([^/]+)/([0-9]+)");
         _sentryHost = sentryDsnRegex.Match(sentryDsn).Groups[2].Value;
     }
+
     private string Url(string id) => $"https://{_sentryHost}/api/0/monitors/{id}/checkins/";
 
     public void OnPerforming(PerformingContext filterContext)
     {
-        var type = filterContext.BackgroundJob.Job.Method.DeclaringType;
-
-        var id = type?.GetCustomAttributes(typeof(SentryMonitorIdAttribute), true)
-            .Cast<SentryMonitorIdAttribute>()
-            .Select(x => x.Id)
-            .FirstOrDefault();
+        var (typeName, id) = GetMethodTypeAndId(filterContext.BackgroundJob.Job.Method, filterContext.BackgroundJob.Job.Method.DeclaringType);
 
         //HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue($"DSN {dsn}");
 
@@ -47,7 +44,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
         {
             scope.Contexts["monitor"] = id;
             scope.SetTag("job_id", filterContext.BackgroundJob.Id);
-            scope.SetTag("job_type", type?.FullName);
+            scope.SetTag("job_type", typeName);
             scope.SetTag("job_method", filterContext.BackgroundJob.Job.Method.Name);
             scope.SetTag("job_arguments", string.Join(", ", filterContext.BackgroundJob.Job.Args));
         });
@@ -67,12 +64,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
     public void OnPerformed(PerformedContext filterContext)
     {
-        var type = filterContext.BackgroundJob.Job.Method.DeclaringType;
-
-        var id = type?.GetCustomAttributes(typeof(SentryMonitorIdAttribute), true)
-            .Cast<SentryMonitorIdAttribute>()
-            .Select(x => x.Id)
-            .FirstOrDefault();
+        var (_, id) = GetMethodTypeAndId(filterContext.BackgroundJob.Job.Method, filterContext.BackgroundJob.Job.Method.DeclaringType);
 
         if (id != null)
         {
@@ -92,12 +84,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
     public void OnStateElection(ElectStateContext context)
     {
-        var type = context.BackgroundJob.Job.Method.DeclaringType;
-
-        var id = type?.GetCustomAttributes(typeof(SentryMonitorIdAttribute), true)
-            .Cast<SentryMonitorIdAttribute>()
-            .Select(x => x.Id)
-            .FirstOrDefault();
+        var (_, id) = GetMethodTypeAndId(context.BackgroundJob.Job.Method, context.BackgroundJob.Job.Method.DeclaringType);
 
         if (context.CandidateState is FailedState failedState)
         {
@@ -116,5 +103,24 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
                 }
             }
         }
+    }
+
+    private static (string typeName, string id) GetMethodTypeAndId(MemberInfo methodInfo, MemberInfo declaringType)
+    {
+        var methodAttribute = methodInfo.GetCustomAttributes(typeof(SentryMonitorIdAttribute), true)
+            .Cast<SentryMonitorIdAttribute>()
+            .Select(x => x.Id)
+            .FirstOrDefault();
+
+        if (methodAttribute != null)
+        {
+            return (declaringType.Name + "." + methodInfo.Name, methodAttribute);
+        }
+
+        var id = declaringType?.GetCustomAttributes(typeof(SentryMonitorIdAttribute), true)
+            .Cast<SentryMonitorIdAttribute>()
+            .Select(x => x.Id)
+            .FirstOrDefault();
+        return (declaringType?.Name + "." + methodInfo.Name, id);
     }
 }
