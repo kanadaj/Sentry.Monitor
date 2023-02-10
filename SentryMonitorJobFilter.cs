@@ -51,9 +51,8 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
         if (id != null)
         {
-            var checkinId = Guid.NewGuid().ToString("N");
-            _checkins[filterContext.BackgroundJob.Id] = (checkinId, DateTime.UtcNow);
-            filterContext.Connection.SetJobParameter(filterContext.BackgroundJob.Id, "start_date", DateTime.UtcNow.ToString("O"));
+            var checkinId = filterContext.BackgroundJob.Id;
+            filterContext.SetJobParameter("start_date", DateTime.UtcNow);
             _httpClient.PostAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
             {
                 status = "in_progress",
@@ -66,10 +65,10 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
     {
         var (_, id) = GetMethodTypeAndId(filterContext.BackgroundJob.Job.Method, filterContext.BackgroundJob.Job.Method.DeclaringType);
 
-        if (id != null)
+        if (id != null && _checkins.ContainsKey(filterContext.BackgroundJob.Id))
         {
-            var (checkinId, startDate) = _checkins[filterContext.BackgroundJob.Id];
-            _checkins.Remove(filterContext.BackgroundJob.Id);
+            var checkinId = filterContext.BackgroundJob.Id;
+            var startDate = filterContext.GetJobParameter<DateTime>("start_date");
             if (checkinId != null)
             {
                 _httpClient.PostAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
@@ -82,16 +81,16 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
         }
     }
 
-    public void OnStateElection(ElectStateContext context)
+    public void OnStateElection(ElectStateContext filterContext)
     {
-        var (_, id) = GetMethodTypeAndId(context.BackgroundJob.Job.Method, context.BackgroundJob.Job.Method.DeclaringType);
+        var (_, id) = GetMethodTypeAndId(filterContext.BackgroundJob.Job.Method, filterContext.BackgroundJob.Job.Method.DeclaringType);
 
-        if (context.CandidateState is FailedState failedState)
+        if (filterContext.CandidateState is FailedState failedState)
         {
-            if (id != null)
+            if (id != null && _checkins.ContainsKey(filterContext.BackgroundJob.Id))
             {
-                var (checkinId, startDate) = _checkins[context.BackgroundJob.Id];
-                _checkins.Remove(context.BackgroundJob.Id);
+                var checkinId = filterContext.BackgroundJob.Id;
+                var startDate = filterContext.GetJobParameter<DateTime>("start_date");
                 if (checkinId != null)
                 {
                     _httpClient.PostAsync(Url(id), new StringContent(JsonConvert.SerializeObject(new
