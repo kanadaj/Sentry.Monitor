@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net7.0;net6.0;net5.0;netcoreapp3.1;netstandard2.0</TargetFrameworks>
+        <PackageTags>$(PackageTags);Hangfire;Sentry.Monitor.Quartz</PackageTags>
+        <Description>Sentry cron integration for Quartz - Open-source error tracking that helps developers monitor and fix crashes in real time.</Description>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Version>0.0.1</Version>
+        <Nullable>enable</Nullable>
+        <LangVersion>10</LangVersion>
+
+        <Authors>Kanadaj</Authors>
+
+        <RepositoryType>git</RepositoryType>
+        <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
+        <RepositoryUrl>https://github.com/kanadaj/sentry.hangfire</RepositoryUrl>
+
+        <PackageIcon>sentry-nuget.png</PackageIcon>
+        <PackageProjectUrl>https://sentry.io</PackageProjectUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="../sentry-nuget.png" Pack="true" PackagePath="" />
+        <None Include="../README.md" Pack="true" PackagePath="" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Quartz" Version="3.6.0" />
+        <PackageReference Include="Sentry" Version="3.28.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Sentry.Monitor.Shared\Sentry.Monitor.Shared.csproj" />
+    </ItemGroup>
+</Project>

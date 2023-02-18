@@ -1,14 +1,15 @@
-﻿using Hangfire.Common;
+﻿using System.Net.Http.Headers;
+using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
+using Hangfire.Common;
 using Hangfire.Logging;
 using Hangfire.Server;
 using Hangfire.States;
 using Newtonsoft.Json;
-using System.Net.Http.Headers;
-using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
+using Sentry.Monitor.Shared;
 
-namespace Sentry.Hangfire;
+namespace Sentry.Monitor.Hangfire;
 
 public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilter
 {
@@ -17,20 +18,12 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
     public int Order => 0;
 
     private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
-
-    private readonly HttpClient _httpClient;
-    private readonly string _sentryHost;
+    private readonly SentryMonitorClient _client;
 
     public SentryMonitorJobFilter(HttpClient httpClient, string sentryDsn)
     {
-        _httpClient = httpClient;
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("DSN", sentryDsn);
-        var sentryDsnRegex = new Regex("https://([^@]+)@([^/]+)/([0-9]+)");
-        _sentryHost = sentryDsnRegex.Match(sentryDsn).Groups[2].Value;
+        _client = new SentryMonitorClient(httpClient, sentryDsn);
     }
-
-    private string CreateCheckinUrl(string id) => $"https://{_sentryHost}/api/0/monitors/{id}/checkins/";
-    private string UpdateCheckinUrl(string id, string checkinId) => $"https://{_sentryHost}/api/0/monitors/{id}/checkins/{checkinId}/";
 
     public void OnPerforming(PerformingContext filterContext)
     {
@@ -40,7 +33,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
         SentrySdk.ConfigureScope(scope =>
         {
-            scope.Contexts["monitor"] = id;
+            scope.Contexts["monitor"] = new{id};
             scope.SetTag("job_id", filterContext.BackgroundJob.Id);
             scope.SetTag("job_type", typeName);
             scope.SetTag("job_method", filterContext.BackgroundJob.Job.Method.Name);
@@ -49,18 +42,11 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
         if (id != null)
         {
-            var checkinId = Guid.NewGuid().ToString("N");
             filterContext.SetJobParameter("start_date", DateTime.UtcNow);
-            var result = _httpClient.PostAsync(CreateCheckinUrl(id), new StringContent(JsonConvert.SerializeObject(new
+            var checkinId = _client.StartCheckinAsync(id).GetAwaiter().GetResult();
+            if (checkinId != null)
             {
-                status = "in_progress",
-                checkin_id = checkinId,
-            }), Encoding.UTF8, "application/json")).GetAwaiter().GetResult();
-            if (result.IsSuccessStatusCode)
-            {
-                var json = result.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                var checkin = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
-                filterContext.SetJobParameter("checkin_id", checkin["id"]);
+                filterContext.SetJobParameter("checkin_id", checkinId);
             }
         }
     }
@@ -75,12 +61,7 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
             var startDate = filterContext.GetJobParameter<DateTime>("start_date");
             if (checkinId != null)
             {
-                _httpClient.PutAsync(UpdateCheckinUrl(id, checkinId), new StringContent(JsonConvert.SerializeObject(new
-                {
-                    status = "ok",
-                    duration = (long)(DateTime.UtcNow - startDate).TotalMilliseconds,
-                    checkin_id = checkinId,
-                }), Encoding.UTF8, "application/json"));
+                _client.FinishCheckinAsync(id, checkinId, false, (long)(DateTime.UtcNow - startDate).TotalMilliseconds).GetAwaiter().GetResult();
             }
         }
     }
@@ -91,18 +72,28 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
         if (filterContext.CandidateState is FailedState failedState)
         {
+            if (failedState.Exception != null)
+            {
+                SentrySdk.CaptureException(failedState.Exception, scope =>
+                {
+                    scope.Contexts["monitor"] = new{id};
+                    scope.SetTag("job_id", filterContext.BackgroundJob.Id);
+                    if (filterContext.BackgroundJob.Job.Method.DeclaringType != null)
+                    {
+                        scope.SetTag("job_type", filterContext.BackgroundJob.Job.Method.DeclaringType.Name);
+                    }
+                    scope.SetTag("job_method", filterContext.BackgroundJob.Job.Method.Name);
+                    scope.SetTag("job_arguments", string.Join(", ", filterContext.BackgroundJob.Job.Args));
+                });
+            }
+            
             if (id != null)
             {
                 var checkinId = filterContext.GetJobParameter<string>("checkin_id");
                 var startDate = filterContext.GetJobParameter<DateTime>("start_date");
                 if (checkinId != null)
                 {
-                    _httpClient.PutAsync(UpdateCheckinUrl(id, checkinId), new StringContent(JsonConvert.SerializeObject(new
-                    {
-                        status = "error",
-                        duration = (long)(DateTime.UtcNow - startDate).TotalMilliseconds,
-                        checkin_id = checkinId,
-                    }), Encoding.UTF8, "application/json"));
+                    _client.FinishCheckinAsync(id, checkinId, true, (long)(DateTime.UtcNow - startDate).TotalMilliseconds).GetAwaiter().GetResult();
                 }
             }
         }

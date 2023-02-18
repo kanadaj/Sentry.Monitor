@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net7.0;net6.0;net5.0;netcoreapp3.1;netstandard2.0</TargetFrameworks>
-		<PackageTags>$(PackageTags);Hangfire;Sentry.Hangfire</PackageTags>
+		<PackageTags>$(PackageTags);Hangfire;Sentry.Monitor.Hangfire</PackageTags>
 		<Description>Sentry cron integration for Hangfire - Open-source error tracking that helps developers monitor and fix crashes in real time.</Description>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Version>0.0.1</Version>
@@ -28,8 +28,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Include="sentry-nuget.png" Pack="true" PackagePath="" />
-	  <None Include="README.md" Pack="true" PackagePath="" />
+	  <None Include="../sentry-nuget.png" Pack="true" PackagePath="" />
+	  <None Include="../README.md" Pack="true" PackagePath="" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -37,6 +37,10 @@
 		<!-- In an ideal world, Hangfire.Core didn't depend on Newtonsoft.Json. But since it does, we need to update it anyway to prevent a CVE, might as well use it instead of System.text.Json in this case -->
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
 		<PackageReference Include="Sentry" Version="3.28.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Sentry.Monitor.Shared\Sentry.Monitor.Shared.csproj" />
 	</ItemGroup>
 
 </Project>
