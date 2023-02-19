@@ -11,7 +11,7 @@ services.AddHangfire((serviceProvider, config) => config.
 	.UseSimpleAssemblyNameTypeSerializer()
 	.UseRecommendedSerializerSettings()
 	.UseSentryMonitor(
-	    serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("HangfireSentryMonitor"), 
+	    serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("SentryMonitor"), 
 	    configuration["Sentry:Dsn"]
     )
 );
@@ -27,7 +27,7 @@ When configuring your scheduler, add the Sentry JobListener to the scheduler:
 ```csharp
 scheduler.ListenerManager
     .AddSentryMonitor(
-        serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("HangfireSentryMonitor"), 
+        serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("SentryMonitor"), 
         configuration["Sentry:Dsn"]
     );
 ```
