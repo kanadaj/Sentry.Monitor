@@ -8,19 +8,23 @@ namespace Sentry.Monitor.Shared;
 internal class SentryMonitorClient
 {
     private readonly HttpClient _httpClient;
-    private readonly string _sentryHost;
     
     public SentryMonitorClient(HttpClient httpClient, string sentryDsn)
     {
         _httpClient = httpClient;
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("DSN", sentryDsn);
         var sentryDsnRegex = new Regex("https://([^@]+)@([^/]+)/([0-9]+)");
-        _sentryHost = sentryDsnRegex.Match(sentryDsn).Groups[2].Value;
+        var sentryHost = sentryDsnRegex.Match(sentryDsn).Groups[2].Value;
+        _httpClient.BaseAddress = new Uri($"https://{sentryHost}/api/0/");
     }
     
+    public SentryMonitorClient(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
+    }
 
-    private string CreateCheckinUrl(string id) => $"https://{_sentryHost}/api/0/monitors/{id}/checkins/";
-    private string UpdateCheckinUrl(string id, string checkinId) => $"https://{_sentryHost}/api/0/monitors/{id}/checkins/{checkinId}/";
+    private string CreateCheckinUrl(string id) => $"monitors/{id}/checkins/";
+    private string UpdateCheckinUrl(string id, string checkinId) => $"monitors/{id}/checkins/{checkinId}/";
     
     public async Task<string?> StartCheckinAsync(string jobId, CancellationToken cancellationToken = new CancellationToken())
     {

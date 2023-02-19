@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sentry.Monitor.Quartz", "Se
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sentry.Monitor.Shared", "Sentry.Monitor.Shared\Sentry.Monitor.Shared.csproj", "{D1157B8E-C89A-4540-9D59-3B4611E9D218}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sentry.Monitor.Quartz.DependencyInjection", "Sentry.Monitor.Quartz.DependencyInjection\Sentry.Monitor.Quartz.DependencyInjection.csproj", "{F509D3A4-A1A2-437D-9C4B-D31A5627314E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{D1157B8E-C89A-4540-9D59-3B4611E9D218}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D1157B8E-C89A-4540-9D59-3B4611E9D218}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D1157B8E-C89A-4540-9D59-3B4611E9D218}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F509D3A4-A1A2-437D-9C4B-D31A5627314E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F509D3A4-A1A2-437D-9C4B-D31A5627314E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F509D3A4-A1A2-437D-9C4B-D31A5627314E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F509D3A4-A1A2-437D-9C4B-D31A5627314E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
