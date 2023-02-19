@@ -32,4 +32,11 @@ scheduler.ListenerManager
     );
 ```
 
+If you use `Microsoft.Extensions.DependencyInjection` to configure your scheduler, you can use the `UseSentryMonitor` extension method instead:
+
+```csharp
+services.AddQuartz(config => {});
+services.AddSentryMonitor();
+```
+
 Then you need to add `[SentryMonitorId("00000000-0000-0000-0000000000")]` to your `IJob`~~~~ class, with the appropriate monitor ID retrieved from sentry.
