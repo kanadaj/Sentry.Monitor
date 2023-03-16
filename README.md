@@ -24,7 +24,7 @@ If you use `Microsoft.Extensions.DependencyInjection` to configure your schedule
 
 ```csharp
 // Register and configure SentryMonitorClient
-services.AddSentryMonitor();
+services.AddHangfireSentryMonitor();
 
 services.AddHangfire((serviceProvider, config) => config.
 	.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
