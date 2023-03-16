@@ -31,7 +31,7 @@ services.AddHangfire((serviceProvider, config) => config.
 	.UseSimpleAssemblyNameTypeSerializer()
 	.UseRecommendedSerializerSettings()
 	// Add SentryMonitorJobFilter to Hangfire
-	.UseSentryMonitor()
+	.UseSentryMonitor(serviceProvider)
 );
 ```
 
