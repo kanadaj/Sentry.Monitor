@@ -1,18 +1,17 @@
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
+using Hangfire;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Quartz;
 using Sentry.Monitor.Shared;
 
-namespace Sentry.Monitor.Quartz.DependencyInjection;
+namespace Sentry.Monitor.Hangfire.DependencyInjection;
 
-public static class SentryMonitorQuartzExtensions
+public static class SentryMonitorHangfireServiceCollectionExtensions
 {
-    public static IServiceCollection AddQuartzSentryMonitor(this IServiceCollection serviceCollection)
+    public static IServiceCollection AddHangfireSentryMonitor(this IServiceCollection services)
     {
-        serviceCollection.AddScoped<SentryMonitorJobListener>();
-        serviceCollection.AddHttpClient<SentryMonitorClient>((sp, options) =>
+        services.AddHttpClient<SentryMonitorClient>((sp, options) =>
         {
             var config = sp.GetService<IOptionsSnapshot<SentryOptions>>()?.Value;
 
@@ -26,13 +25,13 @@ public static class SentryMonitorQuartzExtensions
             var sentryHost = sentryDsnRegex.Match(config.Dsn).Groups[2].Value;
             options.BaseAddress = new Uri($"https://{sentryHost}/api/0/");
         });
-        
-        // AddQuartz is idempotent, so it's safe to call it multiple times.
-        serviceCollection.AddQuartz(config =>
-        {
-            config.AddJobListener<SentryMonitorJobListener>();
-        });
-
-        return serviceCollection;
+        services.AddSingleton<SentryMonitorJobFilter>();
+        return services;
+    }
+    
+    public static IGlobalConfiguration UseSentryMonitor(this IGlobalConfiguration configuration, IServiceProvider services)
+    {
+        var jobFilter = services.GetRequiredService<SentryMonitorJobFilter>();
+        return configuration.UseFilter(jobFilter);
     }
 }

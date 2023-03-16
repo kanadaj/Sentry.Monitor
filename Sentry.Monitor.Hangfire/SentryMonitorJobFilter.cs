@@ -1,12 +1,8 @@
-﻿using System.Net.Http.Headers;
-using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
+﻿using System.Reflection;
 using Hangfire.Common;
 using Hangfire.Logging;
 using Hangfire.Server;
 using Hangfire.States;
-using Newtonsoft.Json;
 using Sentry.Monitor.Shared;
 
 namespace Sentry.Monitor.Hangfire;
@@ -20,9 +16,9 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
     private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
     private readonly SentryMonitorClient _client;
 
-    public SentryMonitorJobFilter(HttpClient httpClient, string sentryDsn)
+    public SentryMonitorJobFilter(SentryMonitorClient client)
     {
-        _client = new SentryMonitorClient(httpClient, sentryDsn);
+        _client = client;
     }
 
     public void OnPerforming(PerformingContext filterContext)

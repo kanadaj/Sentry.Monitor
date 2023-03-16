@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace Sentry.Monitor.Shared;
 
-internal class SentryMonitorClient
+public class SentryMonitorClient
 {
     private readonly HttpClient _httpClient;
     

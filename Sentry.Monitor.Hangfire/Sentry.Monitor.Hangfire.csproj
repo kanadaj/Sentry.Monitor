@@ -13,7 +13,7 @@
 
 		<RepositoryType>git</RepositoryType>
 		<RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
-		<RepositoryUrl>https://github.com/kanadaj/sentry.hangfire</RepositoryUrl>
+		<RepositoryUrl>https://github.com/kanadaj/sentry.monitor</RepositoryUrl>
 
 		<PackageIcon>sentry-nuget.png</PackageIcon>
 		<PackageProjectUrl>https://sentry.io</PackageProjectUrl>

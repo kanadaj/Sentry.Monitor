@@ -4,13 +4,13 @@ using Sentry.Monitor.Shared;
 
 namespace Sentry.Monitor.Quartz;
 
-public class SentryMonitorScheduleListener : IJobListener
+public class SentryMonitorJobListener : IJobListener
 {
     private readonly SentryMonitorClient _client;
 
-    public SentryMonitorScheduleListener(HttpClient httpClient, string sentryDsn)
+    public SentryMonitorJobListener(SentryMonitorClient client)
     {
-        _client = new SentryMonitorClient(httpClient, sentryDsn);
+        _client = client;
     }
 
     public async Task JobToBeExecuted(IJobExecutionContext context, CancellationToken cancellationToken = new CancellationToken())
@@ -83,7 +83,7 @@ public class SentryMonitorScheduleListener : IJobListener
         }
     }
 
-    public string Name => nameof(SentryMonitorScheduleListener);
+    public string Name => nameof(SentryMonitorJobListener);
 
     private static (string typeName, string? id) GetMethodTypeAndId(MemberInfo declaringType)
     {
