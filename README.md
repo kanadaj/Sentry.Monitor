@@ -20,7 +20,7 @@ services.AddHangfire((serviceProvider, config) => config.
 
 Then you need to add `[SentryMonitorId("00000000-0000-0000-0000000000")]` to your job method or the containing class, with the appropriate monitor ID retrieved from sentry.
 
-If you use `Microsoft.Extensions.DependencyInjection` to configure your scheduler, you can use `AddHangfireSentryMonitor()` along wth `UseSentryMonitor()` extension method instead:
+If you use `Microsoft.Extensions.DependencyInjection` to configure your scheduler, you can use `AddHangfireSentryMonitor()` along wth `UseSentryMonitor()` instead:
 
 ```csharp
 // Register and configure SentryMonitorClient
@@ -58,4 +58,4 @@ services.AddQuartz(config => {});
 services.AddQuartzSentryMonitor();
 ```
 
-Then you need to add `[SentryMonitorId("00000000-0000-0000-0000000000")]` to your `IJob`~~~~ class, with the appropriate monitor ID retrieved from sentry.
+Then you need to add `[SentryMonitorId("00000000-0000-0000-0000000000")]` to your `IJob` class, with the appropriate monitor ID retrieved from sentry.
