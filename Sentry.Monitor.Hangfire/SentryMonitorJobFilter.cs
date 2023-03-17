@@ -27,15 +27,6 @@ public class SentryMonitorJobFilter : IJobFilter, IServerFilter, IElectStateFilt
 
         //HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue($"DSN {dsn}");
 
-        SentrySdk.ConfigureScope(scope =>
-        {
-            scope.Contexts["monitor"] = new{id};
-            scope.SetTag("job_id", filterContext.BackgroundJob.Id);
-            scope.SetTag("job_type", typeName);
-            scope.SetTag("job_method", filterContext.BackgroundJob.Job.Method.Name);
-            scope.SetTag("job_arguments", string.Join(", ", filterContext.BackgroundJob.Job.Args));
-        });
-
         if (id != null)
         {
             filterContext.SetJobParameter("start_date", DateTime.UtcNow);
